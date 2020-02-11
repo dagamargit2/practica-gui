@@ -52,9 +52,8 @@ class Aplicacion:
         self.boton3.grid(column=1, row=0, padx=4, pady=4)
 
     def medir(self):
-        self.entryTemp.delete(0,tk.END)
-        self.entryTemp.insert(0,str(self.sense.temp))
-        print(self.datoTemp)
+        self.datoTemp.set(str(self.sense.temp))
+        print(self.datoTemp.get())
 
 
 aplicacion1=Aplicacion()
