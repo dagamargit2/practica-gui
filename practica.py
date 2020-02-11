@@ -43,6 +43,7 @@ class Aplicacion:
         self.listbox1.pack(side = tk.LEFT, fill = tk.BOTH, expand = True)
 
         self.ventana1.bind("<KeyPress>", self.presion_tecla)
+        self.ventana1.bind("<Button-1>", self.presion_raton)
 
         #Lento
         # while True:
@@ -51,7 +52,7 @@ class Aplicacion:
         #    time.sleep(1)
 
         #threading.Thread(target=self.hebra_medir)
-        self.ventana1.after(1000,self.hebra_medir)
+        self.ventana1.after(1000,self.llamada_medir)
         self.ventana1.mainloop()
 
     def mediciones(self):
@@ -79,13 +80,14 @@ class Aplicacion:
 
     def medir(self):
         self.datoTemp.set(str(self.sense.temp))
-        print(self.datoTemp.get())
+        #print(self.datoTemp.get())
         #self.canvas1.itemconfig(self.cuadrado,fill='red')
         self.canvas1.create_rectangle(self.columna_cursor*self.ANCHO_CURSOR,
                                                     self.fila_cursor*self.ALTO_CURSOR,
                                                     (self.columna_cursor+1)*self.ANCHO_CURSOR,
                                                     (self.fila_cursor+1)*self.ALTO_CURSOR,
                                                     fill = self.color(float(self.datoTemp.get())))        
+        self.canvas1.tag_raise(self.cuadrado)                                                    
     
     def crear_cuadrado(self):
         self.cuadrado=self.canvas1.create_rectangle(self.columna_cursor*self.ANCHO_CURSOR,
@@ -108,17 +110,34 @@ class Aplicacion:
             self.fila_cursor=self.fila_cursor-1            
             self.canvas1.move(self.cuadrado, 0, -self.ALTO_CURSOR)
 
-    def color(self,temp):
-        if temp>50:
-            return 'red'
-        else:
-            return 'blue'
+    def presion_raton(self, evento):        
+        nueva_fila=int(evento.y/self.ANCHO_CURSOR)
+        nueva_columna=int(evento.x/self.ALTO_CURSOR)
 
-    def hebra_medir(self):
-        #while True:     
-        self.ventana1.after(1000,self.hebra_medir)
+        difc = nueva_columna-self.columna_cursor
+        diff = nueva_fila-self.fila_cursor
+
+        self.fila_cursor=nueva_fila
+        self.columna_cursor=nueva_columna
+
+        self.canvas1.move(self.cuadrado, difc*self.ANCHO_CURSOR, 
+                                         diff*self.ALTO_CURSOR)
+
+
+    def color(self,temp):
+        if temp<25:
+            return 'cyan'
+        elif temp<50:
+            return 'blue'
+        elif temp<75:
+            return 'yellow'
+        else:
+            return 'red'
+
+
+    def llamada_medir(self):
+        self.ventana1.after(1000,self.llamada_medir)
         self.medir()
-        #time.sleep(1)
 
 
 aplicacion1=Aplicacion()
