@@ -3,6 +3,8 @@ import time
 import threading
 from tkinter import ttk
 from sense_emu import SenseHat  # pip3 install sense_emu
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 
 
 class Aplicacion:
@@ -19,18 +21,26 @@ class Aplicacion:
         self.sense = SenseHat()
         #  temp = sense.temp
 
+        self.data_points=list()
+
         self.ventana1=tk.Tk()
         # self.ventana1.title("Prueba del control Notebook")
 
         self.cuaderno1 = ttk.Notebook(self.ventana1)
         self.pagina1 = ttk.Frame(self.cuaderno1)
         self.cuaderno1.add(self.pagina1, text="Monitorización")
+
+        self.pagina2 = ttk.Frame(self.cuaderno1)
+        self.cuaderno1.add(self.pagina2, text="Matplotlib")
+
         self.cuaderno1.grid(column=0, row=0)        
 
         self.mediciones()
         self.canvas()
         self.operaciones()
         self.historico()
+
+        self.matplotlib()
 
         self.ventana1.bind("<KeyPress>", self.presion_tecla)
         self.ventana1.bind("<Button-1>", self.presion_raton)
@@ -89,6 +99,19 @@ class Aplicacion:
         self.listbox1=tk.Listbox(self.labelframe3)
         self.listbox1.pack(side = tk.LEFT, fill = tk.BOTH, expand = True)
 
+    def matplotlib(self):
+        tk.Label(self.pagina2, text="Live Plotting", bg = 'white').pack()
+        self.fig = Figure()
+    
+        self.ax = self.fig.add_subplot(111)
+        self.ax.set_xlabel("X axis")
+        self.ax.set_ylabel("Y axis")
+        self.ax.grid()
+ 
+        self.graph = FigureCanvasTkAgg(self.fig, master=self.pagina2)
+        self.graph.get_tk_widget().pack(side="top",fill='both',expand=True)        
+
+
 
     # Esta operación crea un cuadrado relleno según la temperatura en la posición
     # actual del cursor.
@@ -129,6 +152,7 @@ class Aplicacion:
             self.fila_cursor=self.fila_cursor-1            
             self.canvas1.move(self.cuadrado, 0, -self.ALTO_CURSOR)
 
+    # TODO: deshabilitar cuando está en otra ventana
     def presion_raton(self, evento):        
         nueva_fila=int(evento.y/self.ANCHO_CURSOR)
         nueva_columna=int(evento.x/self.ALTO_CURSOR)
@@ -154,9 +178,22 @@ class Aplicacion:
             return 'red'
 
 
+    def pinta_grafica(self):
+        self.ax.cla()
+        self.ax.grid()
+        self.data_points.append(self.sense.temp)
+        if len(self.data_points)>10:
+            del self.data_points[0]
+        dpts = self.data_points
+        self.ax.plot(range(10), dpts, marker='o', color='orange')
+        self.graph.draw()
+
+
+
     def llamada_medir(self):
         self.ventana1.after(1000,self.llamada_medir)
         self.medir()
+        self.pinta_grafica()
 
 
 aplicacion1=Aplicacion()
