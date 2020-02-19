@@ -42,8 +42,8 @@ class Aplicacion:
 
         self.matplotlib()
 
-        self.ventana1.bind("<KeyPress>", self.presion_tecla)
-        self.ventana1.bind("<Button-1>", self.presion_raton)
+        #self.ventana1.bind("<KeyPress>", self.presion_tecla)
+        #self.ventana1.bind("<Button-1>", self.presion_raton)
 
         #Lento
         # while True:
@@ -53,6 +53,7 @@ class Aplicacion:
 
         #threading.Thread(target=self.hebra_medir)
         self.ventana1.after(1000,self.llamada_medir)
+        self.ventana1.after(1000,self.comprobar_joystick)
         self.ventana1.mainloop()
 
     def mediciones(self):
@@ -195,5 +196,26 @@ class Aplicacion:
         self.medir()
         self.pinta_grafica()
 
+    def move_dot(self,event):
+        #print(event)
+        if event.action in ('pressed', 'held'):
+            if event.direction=='right':
+                self.columna_cursor=self.columna_cursor+1
+                self.canvas1.move(self.cuadrado, self.ANCHO_CURSOR, 0)
+            if event.direction=='left':
+                self.columna_cursor=self.columna_cursor-1            
+                self.canvas1.move(self.cuadrado, -self.ANCHO_CURSOR, 0)
+            if event.direction=='down':
+                self.fila_cursor=self.fila_cursor+1            
+                self.canvas1.move(self.cuadrado, 0, self.ALTO_CURSOR)
+            if event.direction=='up':
+                self.fila_cursor=self.fila_cursor-1            
+                self.canvas1.move(self.cuadrado, 0, -self.ALTO_CURSOR)
+
+
+    def comprobar_joystick(self):
+        self.ventana1.after(1000,self.comprobar_joystick)
+        for event in self.sense.stick.get_events():
+            self.move_dot(event)
 
 aplicacion1=Aplicacion()
