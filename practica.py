@@ -1,6 +1,7 @@
 import tkinter as tk
 import time
 import threading
+import queue
 from tkinter import ttk
 from sense_emu import SenseHat  # pip3 install sense_emu
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -22,6 +23,8 @@ class Aplicacion:
         #  temp = sense.temp
 
         self.data_points=list()
+
+        self.queue=queue.Queue()    # Para comunicacion con hebra worker
 
         self.ventana1=tk.Tk()
         # self.ventana1.title("Prueba del control Notebook")
@@ -54,7 +57,10 @@ class Aplicacion:
         #threading.Thread(target=self.hebra_medir)
         self.ventana1.after(1000,self.llamada_medir)
         self.ventana1.after(1000,self.comprobar_joystick)
+
         self.ventana1.mainloop()
+
+
 
     def mediciones(self):
         self.labelframe1=ttk.LabelFrame(self.pagina1, text="Medidas")        
@@ -90,8 +96,12 @@ class Aplicacion:
 
         self.boton2=ttk.Button(self.labelframe2, text="Lectura", command=self.medir)
         self.boton2.grid(column=0, row=0, padx=4, pady=4)
-        self.boton3=ttk.Button(self.labelframe2, text="Añadir")
+        self.boton3=ttk.Button(self.labelframe2, text="Calcular Media", command=self.comenzar_calculo)
         self.boton3.grid(column=1, row=0, padx=4, pady=4)
+
+        self.label_worker=ttk.Label(self.labelframe2, text="Tarea parada")        
+        self.label_worker.grid(column=0, row=1, padx=4, pady=4)
+
 
     def historico(self):
         self.labelframe3=ttk.LabelFrame(self.pagina1, text="Histórico")        
@@ -196,6 +206,7 @@ class Aplicacion:
         self.medir()
         self.pinta_grafica()
 
+
     def move_dot(self,event):
         #print(event)
         if event.action in ('pressed', 'held'):
@@ -217,5 +228,31 @@ class Aplicacion:
         self.ventana1.after(1000,self.comprobar_joystick)
         for event in self.sense.stick.get_events():
             self.move_dot(event)
+
+
+    def process_queue(self):
+        try:
+            msg = self.queue.get(0)
+            self.label_worker.configure(text=msg)
+            # Show result of the task if needed
+        except queue.Empty:
+            self.ventana1.after(1000, self.process_queue)
+
+    def comenzar_calculo(self):
+        self.label_worker.configure(text='Tarea arrancada')
+        ThreadedTask(self.queue).start()
+        self.ventana1.after(1000, self.process_queue)
+
+
+
+class ThreadedTask(threading.Thread):
+    def __init__(self, queue):
+        threading.Thread.__init__(self)
+        self.queue = queue
+    def run(self):
+        time.sleep(10)  # Simulate long running process
+        self.queue.put("Tarea parada")
+
+
 
 aplicacion1=Aplicacion()
