@@ -1,11 +1,10 @@
 import tkinter as tk
-import time
-import threading
 import queue
 from tkinter import ttk
 from sense_emu import SenseHat  # pip3 install sense_emu
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+import worker
 
 
 class Aplicacion:
@@ -227,7 +226,7 @@ class Aplicacion:
 
 
     def llamada_medir(self):
-        self.ventana1.after(10,self.llamada_medir)
+        self.ventana1.after(100,self.llamada_medir)
         self.medir()
         self.pinta_grafica()
 
@@ -269,19 +268,8 @@ class Aplicacion:
             self.ventana1.after(1000, self.process_queue)
 
     def comenzar_calculo(self):
-        self.label_worker.configure(text='Tarea arrancada')
-        ThreadedTask(self.queue).start()
+        self.label_worker.configure(text='Tarea arrancada')        
+        worker.ThreadedTask(self.queue).start()
         self.ventana1.after(1000, self.process_queue)
-
-
-# TODO: mover a otro fichero
-class ThreadedTask(threading.Thread):
-    def __init__(self, queue):
-        threading.Thread.__init__(self)
-        self.queue = queue
-    def run(self):
-        time.sleep(10)  # Simulate long running process
-        self.queue.put("Tarea parada")
-
 
 aplicacion1=Aplicacion()
