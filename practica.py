@@ -20,6 +20,7 @@ class Aplicacion:
     def __init__(self):
         self.sense = SenseHat()
 
+        self.midiendo = True        # Mediciones activas
         self.data_points=list()     # Puntos para la gráfica
 
         self.queue=queue.Queue()    # Para comunicacion con hebra worker
@@ -101,8 +102,8 @@ class Aplicacion:
         self.frame=tk.Frame(self.labelframe2)
         self.frame.grid(column=0, row=0)
 
-        self.boton2=ttk.Button(self.frame, text="Lectura", command=self.medir)
-        self.boton2.pack(side=tk.LEFT)
+        self.boton_start_stop=ttk.Button(self.frame, text="Parar", command=self.start_stop)
+        self.boton_start_stop.pack(side=tk.LEFT)
         self.boton3=ttk.Button(self.frame, text="Calcular Media", command=self.comenzar_calculo)
         self.boton3.pack(side=tk.RIGHT)
 
@@ -114,8 +115,20 @@ class Aplicacion:
         self.labelframe3=ttk.LabelFrame(self.pagina1, text="Histórico")        
         self.labelframe3.grid(column=0, row=2, columnspan = 2, sticky=tk.W+tk.E)        
 
-        self.listbox1=tk.Listbox(self.labelframe3)
-        self.listbox1.pack(side = tk.LEFT, fill = tk.BOTH, expand = True)
+        self.frame2=tk.Frame(self.labelframe3)
+        self.frame2.pack(side = tk.TOP, fill = tk.BOTH, expand=True)
+        self.listbox1=tk.Listbox(self.frame2)
+        self.listbox1.pack(side = tk.LEFT, fill = tk.BOTH, expand=True)
+        #self.listbox1.grid(column=0, row=0)
+
+        self.scroll1 = tk.Scrollbar(self.frame2, orient=tk.VERTICAL)
+        self.scroll1.configure(command=self.listbox1.yview)         
+        #self.scroll1.grid(column=1, row=0, sticky="NS")
+        self.scroll1.pack(side = tk.RIGHT, fill=tk.Y)
+
+        self.boton_limpiar=tk.Button(self.labelframe3, text="Limpiar")
+        self.boton_limpiar.pack(side = tk.BOTTOM)
+
 
 
     def matplotlib(self):
@@ -146,6 +159,16 @@ class Aplicacion:
 
     # Métodos relacionados con mediciones periódicas
 
+
+    def start_stop(self):
+        if self.midiendo:
+            self.midiendo = False
+            self.boton_start_stop.configure(text='Comenzar')
+        else:
+            self.midiendo = True
+            self.boton_start_stop.configure(text='Parar')
+
+
     # Esta operación crea un cuadrado relleno según la temperatura en la posición
     # actual del cursor.
     # Actualiza también el cuadro de texto con la temperatura
@@ -170,6 +193,8 @@ class Aplicacion:
         
 
         self.canvas1.tag_raise(self.cuadrado) # Para que el cursor siempre esté en primer plano                                                   
+
+        self.listbox1.insert(0,self.datoTemp.get())
 
 
     # def presion_tecla(self, evento):        
@@ -227,8 +252,9 @@ class Aplicacion:
 
     def llamada_medir(self):
         self.ventana1.after(100,self.llamada_medir)
-        self.medir()
-        self.pinta_grafica()
+        if self.midiendo:
+            self.medir()
+            self.pinta_grafica()
 
 
 
