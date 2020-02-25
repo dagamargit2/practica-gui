@@ -99,10 +99,13 @@ class Aplicacion:
         self.labelframe2=ttk.LabelFrame(self.pagina1, text="Operaciones")        
         self.labelframe2.grid(column=0, row=1)        
 
-        self.boton2=ttk.Button(self.labelframe2, text="Lectura", command=self.medir)
-        self.boton2.grid(column=0, row=0, padx=4, pady=4)
-        self.boton3=ttk.Button(self.labelframe2, text="Calcular Media", command=self.comenzar_calculo)
-        self.boton3.grid(column=1, row=0, padx=4, pady=4)
+        self.frame=tk.Frame(self.labelframe2)
+        self.frame.grid(column=0, row=0)
+
+        self.boton2=ttk.Button(self.frame, text="Lectura", command=self.medir)
+        self.boton2.pack(side=tk.LEFT)
+        self.boton3=ttk.Button(self.frame, text="Calcular Media", command=self.comenzar_calculo)
+        self.boton3.pack(side=tk.RIGHT)
 
         self.label_worker=ttk.Label(self.labelframe2, text="Tarea parada")        
         self.label_worker.grid(column=0, row=1, padx=4, pady=4)
