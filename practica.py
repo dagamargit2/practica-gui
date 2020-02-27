@@ -4,6 +4,7 @@ from tkinter import ttk
 from sense_emu import SenseHat  # pip3 install sense_emu
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+import matplotlib.animation as animation
 import worker
 
 
@@ -138,10 +139,19 @@ class Aplicacion:
         self.ax = self.fig.add_subplot(111)
         self.ax.set_xlabel("X axis")
         self.ax.set_ylabel("Y axis")
-        self.ax.grid()
- 
+        #self.ax.grid()
+        self.ax.cla()   # clear axis
+        self.ax.grid()  # configura grids
+        self.ax.set_xlim(0, 9)
+        self.ax.set_ylim(0, 100)
+
+        self.line, = self.ax.plot([], [], marker='o', color='orange')
+
+
         self.graph = FigureCanvasTkAgg(self.fig, master=self.pagina2)
         self.graph.get_tk_widget().pack(side="top",fill='both',expand=True)        
+
+        self.ani = animation.FuncAnimation(self.fig, self.pinta_grafica, interval=1000, blit=False)
 
 
 
@@ -194,7 +204,7 @@ class Aplicacion:
 
         self.canvas1.tag_raise(self.cuadrado) # Para que el cursor siempre esté en primer plano                                                   
 
-        self.listbox1.insert(0,self.datoTemp.get())
+ #       self.listbox1.insert(0,self.datoTemp.get())
 
 
     # def presion_tecla(self, evento):        
@@ -238,15 +248,15 @@ class Aplicacion:
 
 
 
-    def pinta_grafica(self):
-        self.ax.cla()
-        self.ax.grid()
+    def pinta_grafica(self,i):
         self.data_points.append(self.sense.temp)
         if len(self.data_points)>10:
             del self.data_points[0]
-        dpts = self.data_points
-        self.ax.plot(range(10), dpts, marker='o', color='orange')
-        self.graph.draw()
+        #dpts = self.data_points
+        #self.ax.plot(range(10), dpts, marker='o', color='orange')
+        #self.graph.draw()        
+        self.line.set_data(range(len(self.data_points)),self.data_points)
+        self.ax.set_ylim(min(self.data_points)-1,max(self.data_points)+1)
 
 
 
@@ -254,7 +264,7 @@ class Aplicacion:
         self.ventana1.after(100,self.llamada_medir)
         if self.midiendo:
             self.medir()
-            self.pinta_grafica()
+#            self.pinta_grafica()
 
 
 
