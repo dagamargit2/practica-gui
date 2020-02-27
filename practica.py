@@ -120,12 +120,11 @@ class Aplicacion:
         self.frame2.pack(side = tk.TOP, fill = tk.BOTH, expand=True)
         self.listbox1=tk.Listbox(self.frame2)
         self.listbox1.pack(side = tk.LEFT, fill = tk.BOTH, expand=True)
-        #self.listbox1.grid(column=0, row=0)
 
         self.scroll1 = tk.Scrollbar(self.frame2, orient=tk.VERTICAL)
         self.scroll1.configure(command=self.listbox1.yview)         
-        #self.scroll1.grid(column=1, row=0, sticky="NS")
         self.scroll1.pack(side = tk.RIGHT, fill=tk.Y)
+        self.listbox1.config(yscrollcommand=self.scroll1.set)   # 2 conexiones listbox <-> scroll
 
         self.boton_limpiar=tk.Button(self.labelframe3, text="Limpiar")
         self.boton_limpiar.pack(side = tk.BOTTOM)
