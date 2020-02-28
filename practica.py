@@ -40,9 +40,9 @@ class Aplicacion:
         self.cuaderno1.grid(column=0, row=0)        
 
         # Página 1
+        self.operaciones()
         self.mediciones()
         self.canvas()
-        self.operaciones()
         self.historico()
 
         # Página 2
@@ -67,7 +67,7 @@ class Aplicacion:
 
     def mediciones(self):
         self.labelframe1=ttk.LabelFrame(self.pagina1, text="Medidas")        
-        self.labelframe1.grid(column=0, row=0)        
+        self.labelframe1.grid(column=0, row=1)        
 
         self.label1=ttk.Label(self.labelframe1, text="Temperatura:")
         self.label1.grid(column=0, row=0, padx=4, pady=4)
@@ -98,7 +98,7 @@ class Aplicacion:
 
     def operaciones(self):
         self.labelframe2=ttk.LabelFrame(self.pagina1, text="Operaciones")        
-        self.labelframe2.grid(column=0, row=1)        
+        self.labelframe2.grid(column=0, row=0)        
 
         self.frame=tk.Frame(self.labelframe2)
         self.frame.grid(column=0, row=0)
@@ -126,7 +126,11 @@ class Aplicacion:
         self.scroll1.pack(side = tk.RIGHT, fill=tk.Y)
         self.listbox1.config(yscrollcommand=self.scroll1.set)   # 2 conexiones listbox <-> scroll
 
-        self.boton_limpiar=tk.Button(self.labelframe3, text="Limpiar")
+        self.seleccion=tk.IntVar()
+        self.check1=tk.Checkbutton(self.labelframe3,text="Añadir a lista", variable=self.seleccion)
+        self.check1.pack(side = tk.BOTTOM)
+
+        self.boton_limpiar=tk.Button(self.labelframe3, text="Limpiar", command=self.limpiar_historico)
         self.boton_limpiar.pack(side = tk.BOTTOM)
 
 
@@ -178,6 +182,10 @@ class Aplicacion:
             self.boton_start_stop.configure(text='Parar')
 
 
+    def limpiar_historico(self):
+        self.listbox1.delete(0,tk.END)
+      
+
     # Esta operación crea un cuadrado relleno según la temperatura en la posición
     # actual del cursor.
     # Actualiza también el cuadro de texto con la temperatura
@@ -203,7 +211,8 @@ class Aplicacion:
 
         self.canvas1.tag_raise(self.cuadrado) # Para que el cursor siempre esté en primer plano                                                   
 
- #       self.listbox1.insert(0,self.datoTemp.get())
+        if self.seleccion.get()==1:
+            self.listbox1.insert(0,self.datoTemp.get())
 
 
     # def presion_tecla(self, evento):        
