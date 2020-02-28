@@ -6,6 +6,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib.animation as animation
 import worker
+import datetime
 
 
 class Aplicacion:
@@ -118,13 +119,21 @@ class Aplicacion:
 
         self.frame2=tk.Frame(self.labelframe3)
         self.frame2.pack(side = tk.TOP, fill = tk.BOTH, expand=True)
-        self.listbox1=tk.Listbox(self.frame2)
-        self.listbox1.pack(side = tk.LEFT, fill = tk.BOTH, expand=True)
+        #self.listbox1=tk.Listbox(self.frame2)
+        #self.listbox1.pack(side = tk.LEFT, fill = tk.BOTH, expand=True)
+        self.tree = ttk.Treeview(self.frame2)
+        self.tree.pack(side = tk.LEFT, fill = tk.BOTH, expand=True)
 
         self.scroll1 = tk.Scrollbar(self.frame2, orient=tk.VERTICAL)
-        self.scroll1.configure(command=self.listbox1.yview)         
+        self.scroll1.configure(command=self.tree.yview)         
         self.scroll1.pack(side = tk.RIGHT, fill=tk.Y)
-        self.listbox1.config(yscrollcommand=self.scroll1.set)   # 2 conexiones listbox <-> scroll
+        self.tree.config(yscrollcommand=self.scroll1.set)   # 2 conexiones tree <-> scroll
+
+        self.tree['columns'] = ('value', 'when')
+
+        self.tree.heading('#0', text='#Num')
+        self.tree.heading('value', text='Valor')
+        self.tree.heading('when', text='Fecha/Hora')
 
         self.seleccion=tk.IntVar()
         self.check1=tk.Checkbutton(self.labelframe3,text="Añadir a lista", variable=self.seleccion)
@@ -139,7 +148,7 @@ class Aplicacion:
         tk.Label(self.pagina2, text="Live Plotting", bg = 'white').pack()
         self.fig = Figure()
     
-        self.ax = self.fig.add_subplot(111)
+        self.ax = self.fig.add_subplot(111) # https://matplotlib.org/3.1.3/api/_as_gen/matplotlib.pyplot.subplot.html: nºfilas, nºcolumnas, índice subplotcd
         self.ax.set_xlabel("X axis")
         self.ax.set_ylabel("Y axis")
         self.ax.cla()   # clear axis
@@ -150,7 +159,7 @@ class Aplicacion:
         self.line, = self.ax.plot([], [], marker='o', color='orange')
 
 
-        self.graph = FigureCanvasTkAgg(self.fig, master=self.pagina2)
+        self.graph = FigureCanvasTkAgg(self.fig, master=self.pagina2)   # Agg: Anti-Grain geometry rendering engine
         self.graph.get_tk_widget().pack(side="top",fill='both',expand=True)        
 
         self.ani = animation.FuncAnimation(self.fig, self.pinta_grafica, interval=1000, blit=False)
@@ -182,8 +191,7 @@ class Aplicacion:
 
 
     def limpiar_historico(self):
-        self.listbox1.delete(0,tk.END)
-      
+        self.tree.delete(*self.tree.get_children()) # * "desempaqueta" argumento     
 
     # Esta operación crea un cuadrado relleno según la temperatura en la posición
     # actual del cursor.
@@ -211,7 +219,9 @@ class Aplicacion:
         self.canvas1.tag_raise(self.cuadrado) # Para que el cursor siempre esté en primer plano                                                   
 
         if self.seleccion.get()==1:
-            self.listbox1.insert(0,self.datoTemp.get())
+        #    self.listbox1.insert(0,self.datoTemp.get())
+            now = datetime.datetime.now()
+            self.tree.insert('', 0, text=str(len(self.tree.get_children())), values=(self.datoTemp.get(),now.strftime("%Y-%m-%d %H:%M:%S")))
 
 
     # def presion_tecla(self, evento):        
