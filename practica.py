@@ -142,9 +142,8 @@ class Aplicacion:
         self.ax = self.fig.add_subplot(111)
         self.ax.set_xlabel("X axis")
         self.ax.set_ylabel("Y axis")
-        #self.ax.grid()
         self.ax.cla()   # clear axis
-        self.ax.grid()  # configura grids
+        self.ax.grid()  # configura grid
         self.ax.set_xlim(0, 9)
         self.ax.set_ylim(0, 100)
 
@@ -260,9 +259,6 @@ class Aplicacion:
         self.data_points.append(self.sense.temp)
         if len(self.data_points)>10:
             del self.data_points[0]
-        #dpts = self.data_points
-        #self.ax.plot(range(10), dpts, marker='o', color='orange')
-        #self.graph.draw()        
         self.line.set_data(range(len(self.data_points)),self.data_points)
         self.ax.set_ylim(min(self.data_points)-1,max(self.data_points)+1)
 
@@ -272,8 +268,6 @@ class Aplicacion:
         self.ventana1.after(100,self.llamada_medir)
         if self.midiendo:
             self.medir()
-#            self.pinta_grafica()
-
 
 
     # Métodos relacionados con movimiento cursor
