@@ -19,6 +19,10 @@ class Aplicacion:
     ANCHO_CURSOR = ANCHO_CANVAS // NUM_COLUMNAS
     ALTO_CURSOR = ALTO_CANVAS // NUM_FILAS
 
+    TEMPERATURA = 1
+    PRESION = 2
+    HUMEDAD = 3
+
     def __init__(self):
         self.sense = SenseHat()
 
@@ -70,22 +74,22 @@ class Aplicacion:
         self.labelframe1=ttk.LabelFrame(self.pagina1, text="Medidas")        
         self.labelframe1.grid(column=0, row=1)        
 
-        self.label1=ttk.Label(self.labelframe1, text="Temperatura:")
-        self.label1.grid(column=0, row=0, padx=4, pady=4)
+        self.seleccion_tipo_dato=tk.IntVar(value=self.TEMPERATURA)
+
+        self.radio1=tk.Radiobutton(self.labelframe1,text="Temperatura", variable=self.seleccion_tipo_dato, value=self.TEMPERATURA)
+        self.radio1.grid(column=0, row=1, padx=4, pady=4)
         
-        self.datoTemp=tk.StringVar()
-        self.entryTemp=ttk.Entry(self.labelframe1,textvariable=self.datoTemp)
+        self.datoSense=tk.StringVar()
+        self.entryTemp=ttk.Entry(self.labelframe1,textvariable=self.datoSense)
         self.entryTemp.grid(column=1, row=0, padx=4, pady=4)
 
-        self.label2=ttk.Label(self.labelframe1, text="Presión:")        
-        self.label2.grid(column=0, row=1, padx=4, pady=4)
-        self.entry2=ttk.Entry(self.labelframe1)
-        self.entry2.grid(column=1, row=1, padx=4, pady=4)
+        self.radio2=tk.Radiobutton(self.labelframe1,text="Presión", variable=self.seleccion_tipo_dato, value=self.PRESION)
+        self.radio2.grid(column=1, row=1, padx=4, pady=4)
 
-        self.label3=ttk.Label(self.labelframe1, text="Humedad:")
-        self.label3.grid(column=0, row=2, padx=4, pady=4)
-        self.entry3=ttk.Entry(self.labelframe1)
-        self.entry3.grid(column=1, row=2, padx=4, pady=4)
+        self.radio3=tk.Radiobutton(self.labelframe1,text="Humedad", variable=self.seleccion_tipo_dato, value=self.HUMEDAD)
+        self.radio3.grid(column=2, row=1, padx=4, pady=4)
+
+
 
 
     def canvas(self):
@@ -129,11 +133,13 @@ class Aplicacion:
         self.scroll1.pack(side = tk.RIGHT, fill=tk.Y)
         self.tree.config(yscrollcommand=self.scroll1.set)   # 2 conexiones tree <-> scroll
 
-        self.tree['columns'] = ('value', 'when')
+        self.tree['columns'] = ('value', 'when', 'type')
 
         self.tree.heading('#0', text='#Num')
         self.tree.heading('value', text='Valor')
         self.tree.heading('when', text='Fecha/Hora')
+        self.tree.heading('type', text='Tipo')
+
 
         self.seleccion=tk.IntVar()
         self.check1=tk.Checkbutton(self.labelframe3,text="Añadir a lista", variable=self.seleccion)
@@ -193,35 +199,54 @@ class Aplicacion:
     def limpiar_historico(self):
         self.tree.delete(*self.tree.get_children()) # * "desempaqueta" argumento     
 
+
+    def str_tipo_medicion(self,tipo_medicion):
+        if tipo_medicion==self.TEMPERATURA:
+            res="Temperatura"
+        elif tipo_medicion==self.PRESION:
+            res="Presión"
+        else:
+            res="Humedad"
+        
+        return res
+
+
     # Esta operación crea un cuadrado relleno según la temperatura en la posición
     # actual del cursor.
     # Actualiza también el cuadro de texto con la temperatura
     #
     # TODO: Comprobar si llamadas continuas a create_rectangle agotan recursos
     def medir(self):
-        self.datoTemp.set(str(self.sense.temp))
-        #print(self.datoTemp.get())
+        if self.seleccion_tipo_dato.get()==self.TEMPERATURA:
+            self.datoSense.set(str(self.sense.temp))
+        elif self.seleccion_tipo_dato.get()==self.PRESION:
+            self.datoSense.set(str(self.sense.pressure))
+        else:
+           self.datoSense.set(str(self.sense.humidity))
+ 
+        #print(self.datoSense.get())
         #self.canvas1.itemconfig(self.cuadrado,fill='red')
 
         # Evitamos crear rectángulos indefinidamente
         clave = (self.fila_cursor,self.columna_cursor)
         if clave in self.cuadrados:
             cuadrado = self.cuadrados[clave]
-            self.canvas1.itemconfig(cuadrado,fill=self.color(float(self.datoTemp.get())))
+            self.canvas1.itemconfig(cuadrado,fill=self.color(float(self.datoSense.get())))
         else:
             self.cuadrados[clave] = self.canvas1.create_rectangle(self.columna_cursor*self.ANCHO_CURSOR,
                                                     self.fila_cursor*self.ALTO_CURSOR,
                                                     (self.columna_cursor+1)*self.ANCHO_CURSOR,
                                                     (self.fila_cursor+1)*self.ALTO_CURSOR,
-                                                    fill = self.color(float(self.datoTemp.get())))
+                                                    fill = self.color(float(self.datoSense.get())))
         
 
         self.canvas1.tag_raise(self.cuadrado) # Para que el cursor siempre esté en primer plano                                                   
 
         if self.seleccion.get()==1:
-        #    self.listbox1.insert(0,self.datoTemp.get())
+        #    self.listbox1.insert(0,self.datoSense.get())
             now = datetime.datetime.now()
-            self.tree.insert('', 0, text=str(len(self.tree.get_children())), values=(self.datoTemp.get(),now.strftime("%Y-%m-%d %H:%M:%S")))
+            self.tree.insert('', 0, text=str(len(self.tree.get_children())), values=(self.datoSense.get(),now.strftime("%Y-%m-%d %H:%M:%S"),
+                            self.str_tipo_medicion(self.seleccion_tipo_dato.get())))
 
 
     # def presion_tecla(self, evento):        
