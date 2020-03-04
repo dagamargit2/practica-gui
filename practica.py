@@ -5,8 +5,10 @@ from sense_emu import SenseHat  # pip3 install sense_emu
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib.animation as animation
-import worker
 import datetime
+import worker_media
+import worker_exportar
+from medicion import Medicion
 
 
 class Aplicacion:
@@ -43,7 +45,7 @@ class Aplicacion:
         self.cuaderno1.add(self.pagina1, text="Monitorización")
 
         self.pagina2 = ttk.Frame(self.cuaderno1)
-        self.cuaderno1.add(self.pagina2, text="Matplotlib")
+        self.cuaderno1.add(self.pagina2, text="Gráfica")
 
         self.cuaderno1.grid(column=0, row=0)        
 
@@ -146,13 +148,19 @@ class Aplicacion:
         self.check1=tk.Checkbutton(self.labelframe3,text="Añadir a lista", variable=self.seleccion)
         self.check1.pack(side = tk.BOTTOM)
 
-        self.boton_limpiar=tk.Button(self.labelframe3, text="Limpiar", command=self.limpiar_historico)
-        self.boton_limpiar.pack(side = tk.BOTTOM)
+        self.frame_historico = tk.Frame(self.labelframe3)
+        self.frame_historico.pack(side = tk.BOTTOM)
+
+        self.boton_limpiar=tk.Button(self.frame_historico, text="Limpiar", command=self.limpiar_historico)
+        self.boton_limpiar.pack(side = tk.LEFT)
+
+        self.boton_exportar=tk.Button(self.frame_historico, text="Exportar", command=self.exportar_historico)
+        self.boton_exportar.pack(side = tk.RIGHT)
 
 
 
-    def matplotlib(self):
-        tk.Label(self.pagina2, text="Live Plotting", bg = 'white').pack()
+    def matplotlib(self):        
+        tk.Label(self.pagina2, text="Temperatura", bg = 'white').pack()
         self.fig = Figure()
     
         self.ax = self.fig.add_subplot(111) # https://matplotlib.org/3.1.3/api/_as_gen/matplotlib.pyplot.subplot.html: nºfilas, nºcolumnas, índice subplotcd
@@ -164,7 +172,6 @@ class Aplicacion:
         self.ax.set_ylim(0, 100)
 
         self.line, = self.ax.plot([], [], marker='o', color='orange')
-
 
         self.graph = FigureCanvasTkAgg(self.fig, master=self.pagina2)   # Agg: Anti-Grain geometry rendering engine
         self.graph.get_tk_widget().pack(side="top",fill='both',expand=True)        
@@ -199,6 +206,27 @@ class Aplicacion:
 
     def limpiar_historico(self):
         self.tree.delete(*self.tree.get_children()) # * "desempaqueta" argumento     
+
+
+    def get_datos_historico(self):
+        l = list()
+
+        for med in self.tree.get_children():
+            # {'text': '0', 'image': '', 'values': ['25.0', '2020-03-04 21:17:44', 'Temperatura'], 'open': 0, 'tags': ''}
+            id = self.tree.item(med)['text']
+            values = self.tree.item(med)['values']
+            l.append(Medicion(id,values[0],values[1],values[2]))
+
+        return l
+
+    def exportar_historico(self):
+        ldatos = self.get_datos_historico()
+        filename =  tk.filedialog.asksaveasfilename(initialdir = ".",title = "Select file",filetypes = (("text files","*.txt"),("all files","*.*")))
+        worker_exportar.ExporterTask(filename, ldatos).start()
+ 
+        # Bloquea interfaz si hay muchos datos
+        #for l in ldatos:
+        #    print(l)
 
 
     def str_tipo_medicion(self,tipo_medicion):
@@ -344,8 +372,10 @@ class Aplicacion:
             self.ventana1.after(1000, self.process_queue)
 
     def comenzar_calculo(self):
+        ldatos = self.get_datos_historico() # Lista mediciones
+
         self.label_worker.configure(text='Tarea arrancada')        
-        worker.ThreadedTask(self.queue).start()
+        worker_media.ThreadedTask(self.queue, ldatos).start()
         self.ventana1.after(1000, self.process_queue)
 
 aplicacion1=Aplicacion()
