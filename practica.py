@@ -24,13 +24,16 @@ class Aplicacion:
     HUMEDAD = 3
 
     def __init__(self):
-        self.sense = SenseHat()
+        self.sense = SenseHat()        
 
         self.midiendo = True        # Mediciones activas
         self.data_points=list()     # Puntos para la gráfica
 
         self.queue=queue.Queue()    # Para comunicacion con hebra worker
         self.cuadrados = dict()       # Para ahorrar recursos GUI guardamos los cuadrados
+
+        self.list_max = [105, 1260, 100]    # Temp, pres, hum
+
 
         self.ventana1=tk.Tk()
         self.ventana1.title("Práctica GUI SenseHat")
@@ -88,8 +91,6 @@ class Aplicacion:
 
         self.radio3=tk.Radiobutton(self.labelframe1,text="Humedad", variable=self.seleccion_tipo_dato, value=self.HUMEDAD)
         self.radio3.grid(column=2, row=1, padx=4, pady=4)
-
-
 
 
     def canvas(self):
@@ -231,13 +232,15 @@ class Aplicacion:
         clave = (self.fila_cursor,self.columna_cursor)
         if clave in self.cuadrados:
             cuadrado = self.cuadrados[clave]
-            self.canvas1.itemconfig(cuadrado,fill=self.color(float(self.datoSense.get())))
+            self.canvas1.itemconfig(cuadrado,fill=self.color(float(self.datoSense.get()),
+                                                                self.seleccion_tipo_dato.get()))
         else:
             self.cuadrados[clave] = self.canvas1.create_rectangle(self.columna_cursor*self.ANCHO_CURSOR,
                                                     self.fila_cursor*self.ALTO_CURSOR,
                                                     (self.columna_cursor+1)*self.ANCHO_CURSOR,
                                                     (self.fila_cursor+1)*self.ALTO_CURSOR,
-                                                    fill = self.color(float(self.datoSense.get())))
+                                                    fill = self.color(float(self.datoSense.get()),
+                                                                self.seleccion_tipo_dato.get()))
         
 
         self.canvas1.tag_raise(self.cuadrado) # Para que el cursor siempre esté en primer plano                                                   
@@ -278,12 +281,12 @@ class Aplicacion:
     #                                      diff*self.ALTO_CURSOR)
 
 
-    def color(self,temp):
-        if temp<25:
+    def color(self,valor,tipo):
+        if valor<0.25*self.list_max[tipo-1]:
             return 'cyan'
-        elif temp<50:
+        elif valor<0.5*self.list_max[tipo-1]:
             return 'blue'
-        elif temp<75:
+        elif valor<0.75*self.list_max[tipo-1]:
             return 'yellow'
         else:
             return 'red'
@@ -330,7 +333,7 @@ class Aplicacion:
             self.move_dot(event)
 
 
-    # Moetodos relacionados con "tarea larga duración"
+    # Metodos relacionados con "tarea larga duración"
 
     def process_queue(self):
         try:
