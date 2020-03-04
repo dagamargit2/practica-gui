@@ -25,6 +25,8 @@ class Aplicacion:
     PRESION = 2
     HUMEDAD = 3
 
+    PERIODO_INICIAL = 1000
+
     def __init__(self):
         self.sense = SenseHat()        
 
@@ -35,10 +37,12 @@ class Aplicacion:
         self.cuadrados = dict()       # Para ahorrar recursos GUI guardamos los cuadrados
 
         self.list_max = [105, 1260, 100]    # Temp, pres, hum
-
+        self.periodo = self.PERIODO_INICIAL
 
         self.ventana1=tk.Tk()
         self.ventana1.title("Práctica GUI SenseHat")
+
+        self.agregar_menu()
 
         self.cuaderno1 = ttk.Notebook(self.ventana1)
         self.pagina1 = ttk.Frame(self.cuaderno1)
@@ -50,7 +54,7 @@ class Aplicacion:
         self.cuaderno1.grid(column=0, row=0)        
 
         # Página 1
-        self.operaciones()
+        self.control()
         self.mediciones()
         self.canvas()
         self.historico()
@@ -68,12 +72,19 @@ class Aplicacion:
         #    self.ventana1.update()
         #    time.sleep(1)
 
-        self.ventana1.after(1000,self.llamada_medir)
+        self.ventana1.after(self.periodo,self.llamada_medir)
         self.ventana1.after(1000,self.comprobar_joystick)
         self.ventana1.mainloop()
 
 
     # Métodos para colocar controles en interfaz gráfica
+
+    def agregar_menu(self):
+        self.menubar1 = tk.Menu(self.ventana1)
+        self.ventana1.config(menu=self.menubar1)
+        self.opciones1 = tk.Menu(self.menubar1, tearoff=0)
+        self.opciones1.add_command(label="Configurar periodo", command=self.configurar)
+        self.menubar1.add_cascade(label="Opciones", menu=self.opciones1) 
 
     def mediciones(self):
         self.labelframe1=ttk.LabelFrame(self.pagina1, text="Medidas")        
@@ -104,21 +115,19 @@ class Aplicacion:
         self.crear_cuadrado()        
 
 
-    def operaciones(self):
-        self.labelframe2=ttk.LabelFrame(self.pagina1, text="Operaciones")        
+    def control(self):
+        self.labelframe2=ttk.LabelFrame(self.pagina1, text="Control")        
         self.labelframe2.grid(column=0, row=0)        
 
-        self.frame=tk.Frame(self.labelframe2)
-        self.frame.grid(column=0, row=0)
+        self.boton_start_stop=ttk.Button(self.labelframe2, text="Parar", command=self.start_stop)
+        self.boton_start_stop.pack(side=tk.TOP)
 
-        self.boton_start_stop=ttk.Button(self.frame, text="Parar", command=self.start_stop)
-        self.boton_start_stop.pack(side=tk.LEFT)
-        self.boton3=ttk.Button(self.frame, text="Calcular Media", command=self.comenzar_calculo)
-        self.boton3.pack(side=tk.RIGHT)
+        self.label_periodo=ttk.Label(self.labelframe2, text="Periodo: ")        
+        self.label_periodo.pack(side=tk.LEFT, padx=4, pady=4)
 
-        self.label_worker=ttk.Label(self.labelframe2, text="Tarea parada")        
-        self.label_worker.grid(column=0, row=1, padx=4, pady=4)
-
+        self.label_periodo2=ttk.Label(self.labelframe2, text=str(self.periodo))        
+        self.label_periodo2.pack(side=tk.RIGHT, padx=4, pady=4)
+        
 
     def historico(self):
         self.labelframe3=ttk.LabelFrame(self.pagina1, text="Histórico")        
@@ -157,6 +166,10 @@ class Aplicacion:
         self.boton_exportar=tk.Button(self.frame_historico, text="Exportar", command=self.exportar_historico)
         self.boton_exportar.pack(side = tk.RIGHT)
 
+        self.boton3=ttk.Button(self.frame_historico, text="Calcular Media", command=self.comenzar_calculo)
+        self.boton3.pack(side=tk.RIGHT)
+
+
 
 
     def matplotlib(self):        
@@ -176,8 +189,14 @@ class Aplicacion:
         self.graph = FigureCanvasTkAgg(self.fig, master=self.pagina2)   # Agg: Anti-Grain geometry rendering engine
         self.graph.get_tk_widget().pack(side="top",fill='both',expand=True)        
 
-        self.ani = animation.FuncAnimation(self.fig, self.pinta_grafica, interval=1000, blit=False)
+        #self.ani = animation.FuncAnimation(self.fig, self.pinta_grafica, interval=1000, blit=False)
+        self.ventana1.after(1000,self.pinta_grafica)
 
+
+    def configurar(self):
+        dialogo1 = DialogoPeriodo(self.ventana1)
+        self.periodo=dialogo1.mostrar()
+        self.label_periodo2.configure(text=str(self.periodo))
 
 
     # Esta función utiliza las coordenadas actuales del cursor para crear el
@@ -321,7 +340,9 @@ class Aplicacion:
 
 
 
-    def pinta_grafica(self,i):
+#    def pinta_grafica(self,i):
+    def pinta_grafica(self):
+        self.ventana1.after(1000,self.pinta_grafica) 
         self.data_points.append(self.sense.temp)
         if len(self.data_points)>10:
             del self.data_points[0]
@@ -331,7 +352,7 @@ class Aplicacion:
 
 
     def llamada_medir(self):
-        self.ventana1.after(100,self.llamada_medir)
+        self.ventana1.after(self.periodo,self.llamada_medir)
         if self.midiendo:
             self.medir()
 
@@ -366,16 +387,40 @@ class Aplicacion:
     def process_queue(self):
         try:
             msg = self.queue.get(0)
-            self.label_worker.configure(text=msg)
-            # Show result of the task if needed
+            tk.messagebox.showinfo("Media", msg)
         except queue.Empty:
             self.ventana1.after(1000, self.process_queue)
 
     def comenzar_calculo(self):
         ldatos = self.get_datos_historico() # Lista mediciones
-
-        self.label_worker.configure(text='Tarea arrancada')        
         worker_media.ThreadedTask(self.queue, ldatos).start()
         self.ventana1.after(1000, self.process_queue)
 
-aplicacion1=Aplicacion()
+
+
+class DialogoPeriodo:
+
+    def __init__(self, ventanaprincipal):
+        self.dialogo=tk.Toplevel(ventanaprincipal)
+        self.label1=ttk.Label(self.dialogo, text="Nuevo periodo:")
+        self.label1.grid(column=0, row=0, padx=5, pady=5)
+        self.dato1=tk.StringVar()
+        self.entry1=ttk.Entry(self.dialogo, textvariable=self.dato1)
+        self.entry1.grid(column=1, row=0, padx=5, pady=5)
+        self.entry1.focus()
+        self.boton1=ttk.Button(self.dialogo, text="Confirmar", command=self.confirmar)
+        self.boton1.grid(column=1, row=1, padx=5, pady=5)
+        self.dialogo.protocol("WM_DELETE_WINDOW", self.confirmar)
+        self.dialogo.resizable(0,0)
+        self.dialogo.grab_set() # directs all events to this and descendant widgets in the application
+
+    def mostrar(self):
+        self.dialogo.wait_window()
+        return int(self.dato1.get())
+
+    def confirmar(self):
+        self.dialogo.destroy()
+
+
+if __name__ == "__main__":
+    aplicacion1=Aplicacion()

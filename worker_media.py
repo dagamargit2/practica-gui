@@ -11,13 +11,13 @@ class ThreadedTask(threading.Thread):
         self.lmediciones = lmediciones
 
     def run(self):
-#        try:
+        try:
             tot = 0.0
             for m in self.lmediciones:
                 tot += m.get_valor()
 
             res = tot / len(self.lmediciones)
             self.queue.put(str(res))
- #       except:
- #           self.queue.put("Error")
+        except:
+            self.queue.put("Error")
 
