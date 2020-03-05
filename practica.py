@@ -10,6 +10,8 @@ import worker_media
 import worker_exportar
 from medicion import Medicion
 
+from tkinter import scrolledtext as st
+from tkinter import constants as const
 
 class Aplicacion:
     ANCHO_CANVAS = 200
@@ -84,6 +86,8 @@ class Aplicacion:
         self.ventana1.config(menu=self.menubar1)
         self.opciones1 = tk.Menu(self.menubar1, tearoff=0)
         self.opciones1.add_command(label="Configurar periodo", command=self.configurar)
+        self.opciones1.add_command(label="Ver Contribuidores", command=self.contribuidores)
+        
         self.menubar1.add_cascade(label="Opciones", menu=self.opciones1) 
 
     def mediciones(self):
@@ -198,6 +202,10 @@ class Aplicacion:
         dialogo1 = DialogoPeriodo(self.ventana1)
         self.periodo=dialogo1.mostrar()
         self.label_periodo2.configure(text=str(self.periodo))
+
+    def contribuidores(self):
+        dialogo1 = DialogoContribuidores(self.ventana1)
+        dialogo1.mostrar()
 
 
     # Esta función utiliza las coordenadas actuales del cursor para crear el
@@ -421,6 +429,64 @@ class DialogoPeriodo:
 
     def confirmar(self):
         self.dialogo.destroy()
+
+
+class DialogoContribuidores:
+
+    def __init__(self, ventanaprincipal):
+        lcontribuidores = self.get_contribuidores()
+
+        self.dialogo=tk.Toplevel(ventanaprincipal)
+        self.dialogo.title('Lista de Contribuidores')
+        self.stext = st.ScrolledText(self.dialogo,bg='white', height=10)
+        # shove a large amount of text in there
+        for c in lcontribuidores:
+            self.stext.insert(const.END,c)
+        #self.stext.insert(const.END, ''' here's a very large block of text.
+        # it just keeps going...
+        #''' + ('...and going...\n\n'*100))
+        self.stext.grid(row=0, column=0, sticky="WE")
+
+        self.boton1=ttk.Button(self.dialogo, text="Confirmar", command=self.confirmar)
+        self.boton1.grid(column=0, row=1, padx=5, pady=5)
+        self.dialogo.protocol("WM_DELETE_WINDOW", self.confirmar)
+        self.dialogo.resizable(0,0)
+        self.dialogo.grab_set() # directs all events to this and descendant widgets in the application
+
+
+    def get_contribuidores(self):
+        res=list()
+        try:
+            f = open('contributors.txt')
+            for contribuidor in f:
+                res.append(contribuidor)
+        except:
+            print('Error abriendo contributors.txt')
+        
+        return res
+
+
+    def mostrar(self):
+        self.dialogo.after(1000, lambda: self.scroll_textbox(self.stext))
+        self.dialogo.wait_window()
+
+
+    def scroll_textbox(self,elem):
+        # get the current index
+        current = float(elem.index(const.CURRENT))
+        new = current
+        # keep incrementing the index until it's not visible
+        while elem.bbox(new):
+            new += 1
+        # make sure the new index is visible
+        elem.see(new)
+        # move the index again in 250ms
+        self.dialogo.after(250, lambda: self.scroll_textbox(elem))
+
+
+    def confirmar(self):
+        self.dialogo.destroy()
+
 
 
 if __name__ == "__main__":
