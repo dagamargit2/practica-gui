@@ -189,8 +189,9 @@ class Aplicacion:
         self.graph = FigureCanvasTkAgg(self.fig, master=self.pagina2)   # Agg: Anti-Grain geometry rendering engine
         self.graph.get_tk_widget().pack(side="top",fill='both',expand=True)        
 
-        #self.ani = animation.FuncAnimation(self.fig, self.pinta_grafica, interval=1000, blit=False)
-        self.ventana1.after(1000,self.pinta_grafica)
+        self.ani = animation.FuncAnimation(self.fig, self.pinta_grafica, interval=1000, blit=False)
+        self.graph.draw_idle()  # para comenzar refresco grafica
+        #self.ventana1.after(1000,self.pinta_grafica)
 
 
     def configurar(self):
@@ -340,15 +341,15 @@ class Aplicacion:
 
 
 
-#    def pinta_grafica(self,i):
-    def pinta_grafica(self):
-        self.ventana1.after(1000,self.pinta_grafica) 
+    def pinta_grafica(self,i):
+#    def pinta_grafica(self):        
+        #self.ventana1.after(1000,self.pinta_grafica) 
         self.data_points.append(self.sense.temp)
         if len(self.data_points)>10:
             del self.data_points[0]
         self.line.set_data(range(len(self.data_points)),self.data_points)
         self.ax.set_ylim(min(self.data_points)-1,max(self.data_points)+1)
-
+        #self.graph.draw_idle()  # para refrescar grafica
 
 
     def llamada_medir(self):
